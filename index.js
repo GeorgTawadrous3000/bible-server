@@ -10,29 +10,33 @@ dotenv.config()
 
 
 app.use(function (req, res, next) {
-    // Website you wish to allow to connect
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    // Allow requests from a specific origin
+    res.setHeader("Access-Control-Allow-Origin", "https://bible-client.vercel.app");
 
-    // Request methods you wish to allow
+    // Allow specific request methods
     res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS, PUT, PATCH, DELETE"
     );
 
-    // Request headers you wish to allow
+    // Allow specific request headers
     res.setHeader(
-      "Access-Control-Allow-Headers",
-      "X-Requested-With,content-type"
+        "Access-Control-Allow-Headers",
+        "X-Requested-With,Content-Type"
     );
 
-    // Set to true if you need the website to include cookies in the requests sent
-    // to the API (e.g. in case you use sessions)
+    // Allow credentials (if required)
     res.setHeader("Access-Control-Allow-Credentials", true);
 
-    // Pass to next layer of middleware ware
+    // Handle preflight requests (OPTIONS method)
+    if (req.method === "OPTIONS") {
+        return res.status(200).end();
+    }
+
+    // Pass to the next middleware
     next();
 });
-  
+
 
 const uri = "mongodb+srv://"+process.env.MONGODB_USER+":"+process.env.MONGODB_PASSWORD+"@cluster0.7xcc0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true})
