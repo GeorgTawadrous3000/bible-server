@@ -34,9 +34,8 @@ app.use(function (req, res, next) {
 });
   
 
-const uri = "mongodb+srv://"+process.env.MONGODB_USER+":"+process.env.MONGODB_PASSWORD+"@cluster0.fmbi09m.mongodb.net/?retryWrites=true&w=majority"
+const uri = "mongodb+srv://"+process.env.MONGODB_USER+":"+process.env.MONGODB_PASSWORD+"@cluster0.7xcc0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true})
-
 
 app.get("/", (req, res)=>{
     res.json("Hi There")
