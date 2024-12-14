@@ -19,7 +19,8 @@
     "mongoose": "^6.0.8",
     "morgan": "^1.10.0",
     "multer": "^1.4.3",
-    "nodemon": "^2.0.13"
+    "nodemon": "^2.0.13",
+    "cors-anywhere": "^0.4.4"
   },
   "devDependencies": {
     "sass": "^1.53.0"
