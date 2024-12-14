@@ -1,70 +1,58 @@
-const express = require("express")
-const app = express()
-const mongoose = require("mongoose")
-const helmet = require("helmet")
-const morgan = require("morgan")
-const dotenv = require("dotenv")
-const authRoute = require("./routes/auth")
-const bibleRoute = require("./routes/bible")
-dotenv.config()
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const authRoute = require("./routes/auth");
+const bibleRoute = require("./routes/bible");
+dotenv.config();
 
-const corsAnywhere = require("cors-anywhere");
+// Middleware
+app.use(express.json());
+app.use(helmet());
+app.use(morgan("common"));
+app.use(cors({
+    origin: "https://bible-client.vercel.app",
+    methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+}));
 
-// Middleware to allow CORS for your API
-app.use(function (req, res, next) {
-    // Website you wish to allow to connect
-    res.setHeader("Access-Control-Allow-Origin", "https://bible-client.vercel.app");
+// Conditional CORS Anywhere proxy for development
+    const corsAnywhere = require("cors-anywhere");
+    const corsProxy = corsAnywhere.createServer({
+        originWhitelist: ["https://bible-client.vercel.app"],
+        requireHeader: ["origin", "x-requested-with"],
+        removeHeaders: ["cookie", "cookie2"],
+    });
 
-    // Request methods you wish to allow
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-    );
+    app.use("/proxy", (req, res) => {
+        corsProxy.emit("request", req, res);
+    });
 
-    // Request headers you wish to allow
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "X-Requested-With,Content-Type"
-    );
 
-    // Allow credentials (if required)
-    res.setHeader("Access-Control-Allow-Credentials", true);
+// MongoDB connection
+const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@cluster0.7xcc0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-    // Handle preflight OPTIONS request
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
-    }
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("MongoDB connected successfully."))
+    .catch((err) => console.error("MongoDB connection error:", err));
 
-    // Pass to next middleware
-    next();
+// Routes
+app.get("/", (req, res) => {
+    res.json("Hi There");
 });
 
-// Setup CORS Anywhere as a proxy server
-const corsProxy = corsAnywhere.createServer({
-    originWhitelist: ["https://bible-client.vercel.app"], // Allow only this origin
-    requireHeader: ["origin", "x-requested-with"],
-    removeHeaders: ["cookie", "cookie2"], // Remove sensitive headers
+app.use("/api/auth", authRoute);
+app.use("/api/bible", bibleRoute);
+
+// Global error handler (optional)
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Define a route for the proxy
-app.use("/proxy", (req, res) => {
-    corsProxy.emit("request", req, res);
-});
-
-
-
-const uri = "mongodb+srv://"+process.env.MONGODB_USER+":"+process.env.MONGODB_PASSWORD+"@cluster0.7xcc0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true})
-
-app.get("/", (req, res)=>{
-    res.json("Hi There")
-})
-
-app.use(express.json())
-app.use(helmet())
-app.use(morgan("common"))
-app.use("/api/auth", authRoute)
-app.use("/api/bible", bibleRoute)
-
-
-app.listen(process.env.PORT || 80)
+// Start server
+const PORT = process.env.PORT || 80;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
